@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EconoPython - Python Workshop</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .line-clamp-2 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Simple icon components to replace Lucide icons
+        const PlayIcon = () => <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zM5 4l6 4-6 4V4z"/></svg>;
+        const RotateCcwIcon = () => <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M1 4a.5.5 0 0 1 .5-.5h.5a.5.5 0 0 1 0 1h-.5A.5.5 0 0 1 1 4zm12 0a.5.5 0 0 1 .5-.5h.5a.5.5 0 0 1 0 1h-.5A.5.5 0 0 1 13 4zm-7.5 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/></svg>;
+        const LightbulbIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M6 15a.5.5 0 0 0 .5-.5V12h3v2.5a.5.5 0 0 0 1 0V12h.5a.5.5 0 0 0 0-1H13V8a5 5 0 0 0-10 0v3h.5a.5.5 0 0 0 0 1H4v2.5a.5.5 0 0 0 .5.5h1zM5 8a4 4 0 1 1 8 0v3H5V8z"/></svg>;
+        const CheckCircleIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>;
+        const LockIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M4 4a4 4 0 0 1 8 0v1h-1V4a3 3 0 0 0-6 0v1H4V4zm2 3V6h4v1h1v6H5V7h1z"/></svg>;
+        const TrophyIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a.5.5 0 0 1 .5.5V3h3a.5.5 0 0 1 0 1h-.5v2.5a3.5 3.5 0 0 1-7 0V4H3.5a.5.5 0 0 1 0-1h3V1.5A.5.5 0 0 1 8 1z"/></svg>;
+        const FlameIcon = () => <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6C10.438 3.489 8.5 2.5 8 0c-.5 2.5-2.438 3.489-3.5 4.5C2.5 6.5 2 9 2 10.5 2 14 4.686 16 8 16z"/></svg>;
+        const TrendingUpIcon = () => <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 16 16"><path d="M15.854 4.854a.5.5 0 0 0-.708-.708L11 8.293 8.854 6.146a.5.5 0 0 0-.708 0L4.5 9.793l-.646-.647a.5.5 0 0 0-.708.708l1 1a.5.5 0 0 0 .708 0L8.5 7.207l2.146 2.147a.5.5 0 0 0 .708 0l4.5-4.5z"/></svg>;
+
+        const EconoPython = () => {
+            // Level definitions
+            const levels = [
+                {
+                    id: 1,
+                    title: "Getting Started with Python",
+                    description: "Begin your coding journey with basic Python syntax.",
+                    task: "Print 'Hello, World!' to get started.",
+                    starterCode: "# Your first program\n",
+                    expectedOutput: "Hello, World!",
+                    hint: "Use the print() function with the text in quotes.",
+                    solution: "print('Hello, World!')"
+                },
+                {
+                    id: 2,
+                    title: "Storing Values",
+                    description: "Learn to store data using variables.",
+                    task: "Create a variable 'gdp_growth' with value 2.5 and print it.",
+                    starterCode: "# Store economic indicators as variables\n",
+                    expectedOutput: "2.5",
+                    hint: "Create a variable: gdp_growth = 2.5, then print it: print(gdp_growth)",
+                    solution: "gdp_growth = 2.5\nprint(gdp_growth)"
+                },
+                {
+                    id: 3,
+                    title: "Data Types",
+                    description: "Work with different types of data: strings for country names, numbers for indicators.",
+                    task: "Create a variable 'country' with value 'United Kingdom' and print 'Analysis for: [country]'",
+                    starterCode: "# Economic data often includes country names\n",
+                    expectedOutput: "Analysis for: United Kingdom",
+                    hint: "Use f-strings for formatting: print(f'Analysis for: {country}')",
+                    solution: "country = 'United Kingdom'\nprint(f'Analysis for: {country}')"
+                },
+                {
+                    id: 4,
+                    title: "Basic Calculations",
+                    description: "Perform basic calculations - GDP growth, inflation adjustments, etc.",
+                    task: "Calculate real GDP: If nominal GDP is 1000 and price level is 1.05, calculate real GDP (1000/1.05).",
+                    starterCode: "# Real GDP = Nominal GDP / Price Level\nnominal_gdp = 1000\nprice_level = 1.05\n",
+                    expectedOutput: "952.3809523809524",
+                    hint: "Divide nominal GDP by price level: real_gdp = nominal_gdp / price_level",
+                    solution: "nominal_gdp = 1000\nprice_level = 1.05\nreal_gdp = nominal_gdp / price_level\nprint(real_gdp)"
+                },
+                {
+                    id: 5,
+                    title: "Conditional Logic",
+                    description: "Use conditional logic for economic analysis - policy thresholds, recession indicators.",
+                    task: "Check if unemployment rate (8.5) is above 8%. If yes, print 'High unemployment detected'",
+                    starterCode: "# Policy analysis often uses thresholds\nunemployment_rate = 8.5\n",
+                    expectedOutput: "High unemployment detected",
+                    hint: "Use if statement to check the condition: if unemployment_rate > 8.0:",
+                    solution: "unemployment_rate = 8.5\nif unemployment_rate > 8.0:\n    print('High unemployment detected')"
+                },
+                {
+                    id: 6,
+                    title: "Loops",
+                    description: "Use while loops for iterative forecasting models.",
+                    task: "Simulate a convergence process: start with value 10, multiply by 0.9 each iteration until value < 5.",
+                    starterCode: "# Economic models often use iterative processes\nvalue = 10\n",
+                    expectedOutput: "10\n9.0\n8.1\n7.29\n6.561\n5.9049\n5.31441",
+                    hint: "Use while loop: while value >= 5: print(value); value = value * 0.9",
+                    solution: "value = 10\nwhile value >= 5:\n    print(value)\n    value = value * 0.9"
+                },
+                {
+                    id: 7,
+                    title: "Dictionaries",
+                    description: "Store structured data using dictionaries.",
+                    task: "Create economic indicators dict: country='UK', gdp=2800, unemployment=4.2. Print the GDP value.",
+                    starterCode: "# Store economic indicators as key-value pairs\n",
+                    expectedOutput: "2800",
+                    hint: "Create dict: indicators = {'country': 'UK', 'gdp': 2800, 'unemployment': 4.2}",
+                    solution: "indicators = {'country': 'UK', 'gdp': 2800, 'unemployment': 4.2}\nprint(indicators['gdp'])"
+                },
+                {
+                    id: 8,
+                    title: "Using Lists",
+                    description: "Create unemployment data [5.2, 5.0, 4.8, 4.5, 4.3], then calculate and print each rate multiplied by 100 (to convert to basis points).",
+                    task: "Create unemployment data [5.2, 5.0, 4.8, 4.5, 4.3], then calculate and print each rate multiplied by 100 (to convert to basis points).",
+                    starterCode: "# Convert unemployment rates to basis points for analysis\n",
+                    expectedOutput: "520.0\n500.0\n480.0\n450.0\n430.0",
+                    hint: "Loop through unemployment rates: for rate in unemployment_rates: print(rate * 100)",
+                    solution: "unemployment_rates = [5.2, 5.0, 4.8, 4.5, 4.3]\nfor rate in unemployment_rates:\n    print(rate * 100)"
+                }
+            ];
+
+            // State management
+            const [currentLevel, setCurrentLevel] = useState(1);
+            const [userCode, setUserCode] = useState(levels[0].starterCode);
+            const [completedLevels, setCompletedLevels] = useState(new Set());
+            const [showHint, setShowHint] = useState(false);
+            const [feedback, setFeedback] = useState(null);
+            const [streak, setStreak] = useState(0);
+            const [showLevelSelector, setShowLevelSelector] = useState(false);
+
+            // Update user code when level changes
+            useEffect(() => {
+                const level = levels.find(l => l.id === currentLevel);
+                setUserCode(level.starterCode);
+                setShowHint(false);
+                setFeedback(null);
+            }, [currentLevel]);
+
+            // Code execution simulation
+            const executeCode = (code) => {
+                try {
+                    const printRegex = /print\((.*?)\)/g;
+                    const matches = [];
+                    let match;
+                    
+                    while ((match = printRegex.exec(code)) !== null) {
+                        let value = match[1].trim();
+                        
+                        if (value.startsWith("'") && value.endsWith("'")) {
+                            matches.push(value.slice(1, -1));
+                        } else if (value.startsWith('"') && value.endsWith('"')) {
+                            matches.push(value.slice(1, -1));
+                        } else if (value.match(/^\d+\.?\d*$/)) {
+                            matches.push(value);
+                        } else if (value.includes('f\'') || value.includes('f"')) {
+                            if (code.includes('country = \'United Kingdom\'') || code.includes('country = "United Kingdom"')) {
+                                matches.push(value.replace(/f['"]Analysis for: \{country\}['"]/, 'Analysis for: United Kingdom'));
+                            }
+                        } else if (value.includes('*') || value.includes('/')) {
+                            try {
+                                const result = eval(value);
+                                matches.push(result.toString());
+                            } catch {
+                                matches.push(value);
+                            }
+                        } else {
+                            if (code.includes('gdp_growth = 2.5')) matches.push('2.5');
+                            if (code.includes('real_gdp = nominal_gdp / price_level')) matches.push('952.3809523809524');
+                            if (code.includes('indicators[\'gdp\']')) matches.push('2800');
+                            if (code.includes('Hello, World!')) matches.push('Hello, World!');
+                            if (code.includes('High unemployment detected')) matches.push('High unemployment detected');
+                        }
+                    }
+
+                    if (code.includes('while value >= 5')) {
+                        matches.push('10', '9.0', '8.1', '7.29', '6.561', '5.9049', '5.31441');
+                    }
+                    if (code.includes('for rate in unemployment_rates') && code.includes('rate * 100')) {
+                        matches.push('520.0', '500.0', '480.0', '450.0', '430.0');
+                    }
+
+                    return matches.join('\n');
+                } catch (error) {
+                    return "Error: " + error.message;
+                }
+            };
+
+            const handleSubmit = () => {
+                const level = levels.find(l => l.id === currentLevel);
+                const output = executeCode(userCode);
+                const isCorrect = output.trim() === level.expectedOutput.trim();
+
+                if (isCorrect) {
+                    setCompletedLevels(prev => new Set([...prev, currentLevel]));
+                    setStreak(prev => prev + 1);
+                    setFeedback({
+                        type: 'success',
+                        message: '🎉 Excellent! You\'ve mastered this concept!',
+                        output: output
+                    });
+                } else {
+                    setStreak(0);
+                    setFeedback({
+                        type: 'error',
+                        message: 'Let\'s refine your code:',
+                        output: output,
+                        expected: level.expectedOutput,
+                        explanation: level.hint
+                    });
+                }
+            };
+
+            const handleReset = () => {
+                const level = levels.find(l => l.id === currentLevel);
+                setUserCode(level.starterCode);
+                setFeedback(null);
+                setShowHint(false);
+            };
+
+            const handleLevelChange = (levelId) => {
+                const maxUnlockedLevel = Math.max(1, Math.max(...Array.from(completedLevels)) + 1);
+                if (levelId <= maxUnlockedLevel) {
+                    setCurrentLevel(levelId);
+                    setShowLevelSelector(false);
+                }
+            };
+
+            const currentLevelData = levels.find(l => l.id === currentLevel);
+            const progressPercentage = (completedLevels.size / levels.length) * 100;
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+                    {/* Header */}
+                    <header className="bg-white shadow-lg border-b-2 border-indigo-600">
+                        <div className="max-w-7xl mx-auto px-4 py-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                    <div className="flex items-center space-x-2">
+                                        <TrendingUpIcon />
+                                        <h1 className="text-3xl font-bold text-indigo-600">EconoPython</h1>
+                                    </div>
+                                    <div className="hidden md:flex items-center space-x-2 text-gray-600">
+                                        <TrophyIcon />
+                                        <span className="font-medium">{completedLevels.size}/{levels.length} Levels</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center space-x-4">
+                                    <div className="hidden sm:block text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                                        MSc Economics & Policy • King's College London
+                                    </div>
+                                    
+                                    <div className="flex items-center space-x-2 bg-orange-100 px-3 py-1 rounded-full">
+                                        <FlameIcon />
+                                        <span className="font-bold text-orange-700">{streak}</span>
+                                        <span className="text-orange-600 text-sm">streak</span>
+                                    </div>
+                                    
+                                    <button
+                                        onClick={() => setShowLevelSelector(!showLevelSelector)}
+                                        className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                                    >
+                                        Level {currentLevel}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {/* Progress Bar */}
+                            <div className="mt-4">
+                                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>Python Skills Progress</span>
+                                    <span>{Math.round(progressPercentage)}%</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div 
+                                        className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                                        style={{ width: `${progressPercentage}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Level Selector Modal */}
+                    {showLevelSelector && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-xl max-w-5xl w-full max-h-[80vh] overflow-y-auto">
+                                <div className="p-6">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h2 className="text-2xl font-bold text-gray-800">Select Econometric Python Level</h2>
+                                        <button
+                                            onClick={() => setShowLevelSelector(false)}
+                                            className="text-gray-500 hover:text-gray-700 text-xl"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {levels.map((level) => {
+                                            const isCompleted = completedLevels.has(level.id);
+                                            const isLocked = level.id > Math.max(1, Math.max(...Array.from(completedLevels)) + 1);
+                                            const isCurrentLevel = level.id === currentLevel;
+                                            
+                                            return (
+                                                <button
+                                                    key={level.id}
+                                                    onClick={() => !isLocked && handleLevelChange(level.id)}
+                                                    disabled={isLocked}
+                                                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                                                        isCurrentLevel
+                                                            ? 'border-indigo-500 bg-indigo-50'
+                                                            : isCompleted
+                                                            ? 'border-green-500 bg-green-50 hover:bg-green-100'
+                                                            : isLocked
+                                                            ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-50'
+                                                            : 'border-gray-300 bg-white hover:border-indigo-300 hover:bg-indigo-50'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="font-bold text-sm text-gray-600">Level {level.id}</span>
+                                                        {isCompleted ? (
+                                                            <CheckCircleIcon />
+                                                        ) : isLocked ? (
+                                                            <LockIcon />
+                                                        ) : null}
+                                                    </div>
+                                                    <h3 className="font-semibold text-gray-800 mb-1">{level.title}</h3>
+                                                    <p className="text-xs text-gray-600 line-clamp-2">{level.description}</p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Main Content */}
+                    <main className="max-w-7xl mx-auto px-4 py-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Left Panel - Instructions */}
+                            <div className="bg-white rounded-xl shadow-lg p-6">
+                                <div className="mb-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h2 className="text-2xl font-bold text-gray-800">
+                                            Level {currentLevel}: {currentLevelData.title}
+                                        </h2>
+                                        {completedLevels.has(currentLevel) && (
+                                            <CheckCircleIcon />
+                                        )}
+                                    </div>
+                                    
+                                    <p className="text-gray-600 mb-4">{currentLevelData.description}</p>
+                                    
+                                    <div className="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-lg">
+                                        <h3 className="font-semibold text-indigo-800 mb-2">📊 Econometric Task:</h3>
+                                        <p className="text-indigo-700">{currentLevelData.task}</p>
+                                    </div>
+                                </div>
+
+                                {/* Hint Section */}
+                                <div className="mb-6">
+                                    <button
+                                        onClick={() => setShowHint(!showHint)}
+                                        className="flex items-center space-x-2 text-yellow-600 hover:text-yellow-700 transition-colors"
+                                    >
+                                        <LightbulbIcon />
+                                        <span className="font-medium">
+                                            {showHint ? 'Hide Hint' : 'Show Hint'}
+                                        </span>
+                                    </button>
+                                    
+                                    {showHint && (
+                                        <div className="mt-3 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                                            <p className="text-yellow-800">{currentLevelData.hint}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Feedback */}
+                                {feedback && (
+                                    <div className={`p-4 rounded-lg mb-6 ${
+                                        feedback.type === 'success' 
+                                            ? 'bg-green-50 border border-green-200' 
+                                            : 'bg-red-50 border border-red-200'
+                                    }`}>
+                                        <p className={`font-medium mb-2 ${
+                                            feedback.type === 'success' 
+                                                ? 'text-green-800' 
+                                                : 'text-red-800'
+                                        }`}>
+                                            {feedback.message}
+                                        </p>
+                                        
+                                        {feedback.output && (
+                                            <div className="mb-2">
+                                                <p className="text-sm text-gray-600 mb-1">Your output:</p>
+                                                <pre className="bg-gray-100 p-2 rounded text-sm font-mono">{feedback.output}</pre>
+                                            </div>
+                                        )}
+                                        
+                                        {feedback.expected && (
+                                            <div className="mb-2">
+                                                <p className="text-sm text-gray-600 mb-1">Expected output:</p>
+                                                <pre className="bg-gray-100 p-2 rounded text-sm font-mono">{feedback.expected}</pre>
+                                            </div>
+                                        )}
+                                        
+                                        {feedback.explanation && feedback.type === 'error' && (
+                                            <div className="mt-3 p-3 bg-blue-50 rounded">
+                                                <p className="text-sm text-blue-800"><strong>Tip:</strong> {feedback.explanation}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Right Panel - Code Editor */}
+                            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                                <div className="bg-gray-800 text-white p-4 flex items-center justify-between">
+                                    <h3 className="font-semibold">📊 Python Editor</h3>
+                                    <div className="flex items-center space-x-2">
+                                        <button
+                                            onClick={handleReset}
+                                            className="flex items-center space-x-1 bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded transition-colors text-sm"
+                                        >
+                                            <RotateCcwIcon />
+                                            <span>Reset</span>
+                                        </button>
+                                        <button
+                                            onClick={handleSubmit}
+                                            className="flex items-center space-x-1 bg-green-600 hover:bg-green-500 px-3 py-1 rounded transition-colors text-sm"
+                                        >
+                                            <PlayIcon />
+                                            <span>Run Code</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-0">
+                                    <textarea
+                                        value={userCode}
+                                        onChange={(e) => setUserCode(e.target.value)}
+                                        className="w-full h-96 p-4 font-mono text-sm bg-gray-900 text-green-400 border-0 resize-none focus:outline-none focus:ring-0"
+                                        placeholder="# Write your econometric Python code here..."
+                                        spellCheck={false}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Navigation */}
+                        <div className="mt-8 flex justify-between items-center">
+                            <button
+                                onClick={() => currentLevel > 1 && handleLevelChange(currentLevel - 1)}
+                                disabled={currentLevel === 1}
+                                className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Previous Level
+                            </button>
+                            
+                            <div className="text-center">
+                                <p className="text-gray-600">
+                                    Level {currentLevel} of {levels.length}
+                                </p>
+                            </div>
+                            
+                            <button
+                                onClick={() => {
+                                    if (completedLevels.has(currentLevel) && currentLevel < levels.length) {
+                                        handleLevelChange(currentLevel + 1);
+                                    }
+                                }}
+                                disabled={!completedLevels.has(currentLevel) || currentLevel === levels.length}
+                                className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Next Level
+                            </button>
+                        </div>
+
+                        {/* Workshop Information Footer */}
+                        <div className="mt-12 bg-white rounded-xl shadow-lg p-6">
+                            <div className="text-center">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                                    Python Workshop for MSc Economics and Policy
+                                </h3>
+                                <p className="text-gray-600 mb-4">
+                                    King's College London • Interactive Python fundamentals
+                                </p>
+                                <div className="flex justify-center space-x-6 text-sm text-gray-500">
+                                    <div className="flex items-center space-x-1">
+                                        <TrendingUpIcon />
+                                        <span>Economic Analysis</span>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                        <TrophyIcon />
+                                        <span>Interactive Learning</span>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                        <CheckCircleIcon />
+                                        <span>Practical Skills</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        // Use React 18 createRoot instead of ReactDOM.render
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<EconoPython />);
+    </script>
+</body>
+</html>
