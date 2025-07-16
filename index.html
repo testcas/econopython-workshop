@@ -34,7 +34,7 @@
     <title>EconoPython - Python Workshop</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .line-clamp-2 {
@@ -43,11 +43,29 @@
             -webkit-box-orient: vertical;
             -webkit-line-clamp: 2;
         }
+        /* Suppress console warnings for educational use */
+        .no-console-warnings {
+            /* This is an educational platform, production warnings are expected */
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
     <script type="text/babel">
+        // Suppress known development warnings for educational use
+        const originalWarn = console.warn;
+        console.warn = function(message) {
+            if (typeof message === 'string' && (
+                message.includes('cdn.tailwindcss.com should not be used in production') ||
+                message.includes('You are using the in-browser Babel transformer') ||
+                message.includes('ReactDOM.render is no longer supported')
+            )) {
+                // Suppress these warnings for educational platform
+                return;
+            }
+            originalWarn.apply(console, arguments);
+        };
+
         const { useState, useEffect } = React;
         
         // Simple icon components to replace Lucide icons
