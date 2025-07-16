@@ -179,7 +179,40 @@
                     setFeedback(null);
                     setAttemptCount(0);
                 }
+                
+                // Load saved progress
+                const savedProgress = localStorage.getItem('econopython-progress');
+                if (savedProgress) {
+                    try {
+                        const progress = JSON.parse(savedProgress);
+                        setCompletedLevels(new Set(progress.completedLevels || []));
+                        setStreak(progress.streak || 0);
+                        setTotalAttempts(progress.totalAttempts || 0);
+                        setCommonErrors(progress.commonErrors || {});
+                    } catch (e) {
+                        console.log('Could not load saved progress');
+                    }
+                }
             }, [currentLevel, challengeMode]);
+
+            // Save progress function
+            const saveProgress = () => {
+                const progress = {
+                    completedLevels: Array.from(completedLevels),
+                    streak: streak,
+                    totalAttempts: totalAttempts,
+                    commonErrors: commonErrors,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('econopython-progress', JSON.stringify(progress));
+            };
+
+            // Save progress whenever it changes
+            useEffect(() => {
+                if (completedLevels.size > 0 || totalAttempts > 0) {
+                    saveProgress();
+                }
+            }, [completedLevels, streak, totalAttempts, commonErrors]);
 
             // Track metrics
             const trackError = (errorType) => {
@@ -221,6 +254,26 @@
                     trackError('assignment_in_condition');
                 }
                 
+                // Check for >= instead of > in unemployment condition (Level 5)
+                if (currentLevel === 5 && code.includes('unemployment_rate >= 8')) {
+                    misconceptions.push({
+                        type: 'wrong_comparison',
+                        message: "The task asks for 'above 8%', which means strictly greater than 8, not greater than or equal to 8.",
+                        suggestion: "Use 'unemployment_rate > 8' instead of 'unemployment_rate >= 8'"
+                    });
+                    trackError('wrong_comparison');
+                }
+                
+                // Check for >= instead of > in GDP growth condition (Level 9)
+                if (currentLevel === 9 && code.includes('>= 2.5')) {
+                    misconceptions.push({
+                        type: 'wrong_comparison_gdp',
+                        message: "The task asks for 'above 2.5%', which means strictly greater than 2.5, not greater than or equal to 2.5.",
+                        suggestion: "Use '> 2.5' instead of '>= 2.5'"
+                    });
+                    trackError('wrong_comparison_gdp');
+                }
+                
                 if ((code.includes('if ') || code.includes('while ') || code.includes('for ')) && code.includes('\n')) {
                     const lines = code.split('\n');
                     for (let i = 0; i < lines.length - 1; i++) {
@@ -255,6 +308,16 @@
                     trackError('variable_vs_string');
                 }
                 
+                // Check for using 'dict' as variable name in level 7
+                if (currentLevel === 7 && code.includes('dict =')) {
+                    misconceptions.push({
+                        type: 'reserved_keyword',
+                        message: "'dict' is a reserved keyword in Python and cannot be used as a variable name.",
+                        suggestion: "Use a different name like 'indicators', 'data', or 'economic_data' instead of 'dict'"
+                    });
+                    trackError('reserved_keyword');
+                }
+                
                 if (code.includes('Hello, World!') && !code.includes("'Hello, World!'") && !code.includes('"Hello, World!"')) {
                     misconceptions.push({
                         type: 'missing_quotes',
@@ -264,7 +327,7 @@
                     trackError('missing_quotes');
                 }
                 
-                if (code.includes('[') && code.includes(']') && code.includes('gdp') && !code.includes("'gdp'") && !code.includes('"gdp"')) {
+                if (code.includes('[') && code.includes(']') && code.includes('gdp') && !code.includes("'gdp'") && !code.includes('"gdp"') && currentLevel === 7) {
                     misconceptions.push({
                         type: 'dict_key_quotes',
                         message: "Dictionary keys must be in quotes when accessing them.",
@@ -345,8 +408,25 @@
                     if (code.includes('while value >= 5') || code.includes('while value>=5')) {
                         return '10\n9.0\n8.1\n7.29\n6.561\n5.9049\n5.31441';
                     }
-                    if (code.includes('for rate in unemployment_rates') && code.includes('rate * 100')) {
-                        return '520.0\n500.0\n480.0\n450.0\n430.0';
+                    
+                    // More flexible list processing for level 8
+                    if (currentLevel === 8 && code.includes('* 100')) {
+                        // Check for various list and loop patterns
+                        const listPatterns = [
+                            /(\w+)\s*=\s*\[5\.2,\s*5\.0,\s*4\.8,\s*4\.5,\s*4\.3\]/,
+                            /(\w+)\s*=\s*\[\s*5\.2\s*,\s*5\.0\s*,\s*4\.8\s*,\s*4\.5\s*,\s*4\.3\s*\]/
+                        ];
+                        
+                        for (let pattern of listPatterns) {
+                            const listMatch = code.match(pattern);
+                            if (listMatch) {
+                                const listName = listMatch[1];
+                                // Check for different loop patterns
+                                if (code.includes(`for `) && code.includes(`in ${listName}`) && code.includes('* 100')) {
+                                    return '520.0\n500.0\n480.0\n450.0\n430.0';
+                                }
+                            }
+                        }
                     }
 
                     // Special handling for level 3 comma-separated print statements
@@ -383,6 +463,11 @@
                             } catch {
                                 matches.push(value);
                             }
+                        } else if (currentLevel === 9 && (value === 'average' || value.includes('np.mean'))) {
+                            // Handle level 9 average calculation
+                            if (code.includes('gdp_growth_rates = [2.1, 3.4, 1.8, 2.9, 3.2]')) {
+                                matches.push('2.68');
+                            }
                         } else {
                             // Handle variable references and other cases
                             if (value === 'gdp_growth' && code.includes('gdp_growth = 2.5')) {
@@ -391,8 +476,14 @@
                                 matches.push('952.3809523809524');
                             } else if (value === 'nominal_gdp/price_level' && code.includes('nominal_gdp = 1000') && code.includes('price_level = 1.05')) {
                                 matches.push('952.3809523809524');
-                            } else if ((value === 'indicators[\'gdp\']' || value === 'indicators["gdp"]') && code.includes('indicators')) {
-                                matches.push('2800');
+                            } else if (currentLevel === 7 && code.includes('gdp') && !code.includes('dict =')) {
+                                // More flexible dictionary access - allow any variable name except 'dict'
+                                const dictMatch = code.match(/(\w+)\s*=\s*\{[^}]*'gdp'\s*:\s*2800[^}]*\}/);
+                                if (dictMatch && value.includes(`${dictMatch[1]}['gdp']`)) {
+                                    matches.push('2800');
+                                } else if (dictMatch && value.includes(`${dictMatch[1]}["gdp"]`)) {
+                                    matches.push('2800');
+                                }
                             } else if (value.includes('unemployment_rate') && code.includes('High unemployment detected')) {
                                 matches.push('High unemployment detected');
                             } else {
@@ -407,11 +498,30 @@
                         }
                     }
                     
-                    // Challenge mode outputs
-                    if (code.includes('average') && code.includes('sum(gdp_growth_rates)')) {
-                        matches.push('2.68');
-                        if (code.includes('Above target')) matches.push('Above target');
+                    // Challenge mode outputs - handle level 9 GDP challenge
+                    if (currentLevel === 9 && code.includes('gdp_growth_rates = [2.1, 3.4, 1.8, 2.9, 3.2]')) {
+                        // Only accept solutions that use > 2.5 (not >= 2.5)
+                        if (code.includes('> 2.5')) {
+                            // Check for various ways to calculate average
+                            if (code.includes('sum(gdp_growth_rates)') && code.includes('len(gdp_growth_rates)')) {
+                                // Standard Python approach
+                                if (code.includes('Above target') || code.includes('above target')) {
+                                    return '2.68\nAbove target';
+                                }
+                            } else if (code.includes('np.mean') && code.includes('import numpy')) {
+                                // NumPy approach
+                                if (code.includes('Above target') || code.includes('above target')) {
+                                    return '2.68\nAbove target';
+                                }
+                            } else if (code.includes('average') && (code.includes('sum(') || code.includes('np.mean'))) {
+                                // Any approach with average calculation
+                                if (code.includes('Above target') || code.includes('above target')) {
+                                    return '2.68\nAbove target';
+                                }
+                            }
+                        }
                     }
+                    
                     if (code.includes('Unemployment: Within target')) matches.push('Unemployment: Within target');
                     if (code.includes('Inflation: Within target')) matches.push('Inflation: Within target');
                     if (code.includes('Overall: Policy targets met')) matches.push('Overall: Policy targets met');
@@ -485,8 +595,16 @@
             };
 
             const toggleChallengeMode = () => {
-                setChallengeMode(!challengeMode);
-                setCurrentLevel(1);
+                const newChallengeMode = !challengeMode;
+                setChallengeMode(newChallengeMode);
+                
+                // If switching to challenge mode and normal mode is complete, start from level 9
+                if (newChallengeMode && completedLevels.has(8)) {
+                    setCurrentLevel(9);
+                } else {
+                    setCurrentLevel(1);
+                }
+                
                 setShowLevelSelector(false);
             };
 
@@ -513,6 +631,13 @@
                                     <div className="hidden sm:block text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
                                         MSc Economics & Policy • King's College London
                                     </div>
+                                    
+                                    <button
+                                        onClick={saveProgress}
+                                        className="text-sm text-gray-600 bg-green-100 px-3 py-1 rounded-full hover:bg-green-200 transition-colors"
+                                    >
+                                        💾 Save Progress
+                                    </button>
                                     
                                     <button
                                         onClick={() => setShowMetrics(!showMetrics)}
