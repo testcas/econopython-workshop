@@ -256,13 +256,21 @@
                     trackError('print_syntax');
                 }
                 
-                if (code.includes('if ') && code.includes('=') && !code.includes('==') && !code.includes('!=') && !code.includes('>=') && !code.includes('<=')) {
-                    misconceptions.push({
-                        type: 'assignment_in_condition',
-                        message: "In conditions, use == to compare, not = (which assigns values).",
-                        suggestion: "Change 'if variable = value' to 'if variable == value'"
-                    });
-                    trackError('assignment_in_condition');
+                // Check for assignment vs comparison in conditions (but be more specific)
+                if (code.includes('if ') && code.includes(' = ') && !code.includes('==') && !code.includes('!=') && !code.includes('>=') && !code.includes('<=')) {
+                    // Only trigger if there's actually an assignment in an if statement
+                    const ifLines = code.split('\n').filter(line => line.trim().startsWith('if '));
+                    for (let line of ifLines) {
+                        if (line.includes(' = ') && !line.includes('==')) {
+                            misconceptions.push({
+                                type: 'assignment_in_condition',
+                                message: "In conditions, use == to compare, not = (which assigns values).",
+                                suggestion: "Change 'if variable = value' to 'if variable == value'"
+                            });
+                            trackError('assignment_in_condition');
+                            break;
+                        }
+                    }
                 }
                 
                 // Check for >= instead of > in unemployment condition (Level 5)
@@ -416,7 +424,20 @@
                         return `Syntax Error: ${syntaxErrors[0]}`;
                     }
 
-                    // Handle loops and special cases FIRST - before print parsing
+                    // Handle special cases FIRST - before general print parsing
+                    
+                    // Special handling for level 5 unemployment check
+                    if (currentLevel === 5 && code.includes('unemployment_rate = 8.5')) {
+                        const hasValidCondition = code.includes('unemployment_rate > 8') || 
+                                                 code.includes('unemployment_rate>8');
+                        const hasCorrectPrint = code.includes('High unemployment detected');
+                        
+                        if (hasValidCondition && hasCorrectPrint) {
+                            return 'High unemployment detected';
+                        }
+                    }
+
+                    // Handle loops and other special cases
                     if (code.includes('while value >= 5') || code.includes('while value>=5')) {
                         return '10\n9.0\n8.1\n7.29\n6.561\n5.9049\n5.31441';
                     }
@@ -451,9 +472,19 @@
                         }
                     }
 
-                    // Special handling for level 5 unemployment check
-                    if (currentLevel === 5 && code.includes('unemployment_rate = 8.5') && code.includes('unemployment_rate > 8') && code.includes('High unemployment detected')) {
-                        return 'High unemployment detected';
+                    // Special handling for level 5 unemployment check - more flexible pattern matching
+                    if (currentLevel === 5 && code.includes('unemployment_rate = 8.5')) {
+                        // Check for various valid patterns of the condition
+                        const hasValidCondition = code.includes('unemployment_rate > 8') || 
+                                                 code.includes('unemployment_rate>8') ||
+                                                 code.includes('8.5 > 8') ||
+                                                 code.includes('8.5>8');
+                        
+                        const hasCorrectPrint = code.includes('High unemployment detected');
+                        
+                        if (hasValidCondition && hasCorrectPrint) {
+                            return 'High unemployment detected';
+                        }
                     }
 
                     const printRegex = /print\((.*?)\)/g;
