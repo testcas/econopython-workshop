@@ -1,24 +1,4 @@
-                    // Handle comma-separated print statements for level 3
-                    if (currentLevel === 3 && (code.includes('print(\'Analysis for:\', country)') || code.includes('print(\'Analysis for: \', country)') || code.includes('print("Analysis for:", country)') || code.includes('print("Analysis for: ", country)'))) {
-                        matches.push('Analysis for: United Kingdom');
-                    }                // Check for common misconceptions in variable printing
-                if (currentLevel === 2 && code.includes('print(\'gdp_growth\')')) {
-                    misconceptions.push({
-                        type: 'variable_vs_string',
-                        message: "You're printing the word 'gdp_growth' instead of the variable's value.",
-                        suggestion: "Remove quotes to print the variable: print(gdp_growth) not print('gdp_growth'). Variables don't need quotes, strings do."
-                    });
-                    trackError('variable_vs_string');
-                }
-                
-                if (currentLevel === 2 && code.includes('print("gdp_growth")')) {
-                    misconceptions.push({
-                        type: 'variable_vs_string',
-                        message: "You're printing the word 'gdp_growth' instead of the variable's value.",
-                        suggestion: "Remove quotes to print the variable: print(gdp_growth) not print(\"gdp_growth\"). Variables don't need quotes, strings do."
-                    });
-                    trackError('variable_vs_string');
-                }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -43,14 +23,14 @@
         const { useState, useEffect } = React;
         
         // Simple icon components
-        const PlayIcon = () => React.createElement('svg', { className: "w-4 h-4", fill: "currentColor", viewBox: "0 0 16 16" }, React.createElement('path', { d: "M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zM5 4l6 4-6 4V4z" }));
-        const RotateCcwIcon = () => React.createElement('svg', { className: "w-4 h-4", fill: "currentColor", viewBox: "0 0 16 16" }, React.createElement('path', { d: "M1 4a.5.5 0 0 1 .5-.5h.5a.5.5 0 0 1 0 1h-.5A.5.5 0 0 1 1 4zm12 0a.5.5 0 0 1 .5-.5h.5a.5.5 0 0 1 0 1h-.5A.5.5 0 0 1 13 4zm-7.5 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z" }));
-        const LightbulbIcon = () => React.createElement('svg', { className: "w-5 h-5", fill: "currentColor", viewBox: "0 0 16 16" }, React.createElement('path', { d: "M6 15a.5.5 0 0 0 .5-.5V12h3v2.5a.5.5 0 0 0 1 0V12h.5a.5.5 0 0 0 0-1H13V8a5 5 0 0 0-10 0v3h.5a.5.5 0 0 0 0 1H4v2.5a.5.5 0 0 0 .5.5h1zM5 8a4 4 0 1 1 8 0v3H5V8z" }));
-        const CheckCircleIcon = () => React.createElement('svg', { className: "w-5 h-5", fill: "currentColor", viewBox: "0 0 16 16" }, React.createElement('path', { d: "M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" }));
-        const LockIcon = () => React.createElement('svg', { className: "w-5 h-5", fill: "currentColor", viewBox: "0 0 16 16" }, React.createElement('path', { d: "M4 4a4 4 0 0 1 8 0v1h-1V4a3 3 0 0 0-6 0v1H4V4zm2 3V6h4v1h1v6H5V7h1z" }));
-        const TrophyIcon = () => React.createElement('svg', { className: "w-5 h-5", fill: "currentColor", viewBox: "0 0 16 16" }, React.createElement('path', { d: "M8 1a.5.5 0 0 1 .5.5V3h3a.5.5 0 0 1 0 1h-.5v2.5a3.5 3.5 0 0 1-7 0V4H3.5a.5.5 0 0 1 0-1h3V1.5A.5.5 0 0 1 8 1z" }));
-        const FlameIcon = () => React.createElement('svg', { className: "w-4 h-4", fill: "currentColor", viewBox: "0 0 16 16" }, React.createElement('path', { d: "M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6C10.438 3.489 8.5 2.5 8 0c-.5 2.5-2.438 3.489-3.5 4.5C2.5 6.5 2 9 2 10.5 2 14 4.686 16 8 16z" }));
-        const TrendingUpIcon = () => React.createElement('svg', { className: "w-8 h-8", fill: "currentColor", viewBox: "0 0 16 16" }, React.createElement('path', { d: "M15.854 4.854a.5.5 0 0 0-.708-.708L11 8.293 8.854 6.146a.5.5 0 0 0-.708 0L4.5 9.793l-.646-.647a.5.5 0 0 0-.708.708l1 1a.5.5 0 0 0 .708 0L8.5 7.207l2.146 2.147a.5.5 0 0 0 .708 0l4.5-4.5z" }));
+        const PlayIcon = () => <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zM5 4l6 4-6 4V4z"/></svg>;
+        const RotateCcwIcon = () => <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M1 4a.5.5 0 0 1 .5-.5h.5a.5.5 0 0 1 0 1h-.5A.5.5 0 0 1 1 4zm12 0a.5.5 0 0 1 .5-.5h.5a.5.5 0 0 1 0 1h-.5A.5.5 0 0 1 13 4zm-7.5 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/></svg>;
+        const LightbulbIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M6 15a.5.5 0 0 0 .5-.5V12h3v2.5a.5.5 0 0 0 1 0V12h.5a.5.5 0 0 0 0-1H13V8a5 5 0 0 0-10 0v3h.5a.5.5 0 0 0 0 1H4v2.5a.5.5 0 0 0 .5.5h1zM5 8a4 4 0 1 1 8 0v3H5V8z"/></svg>;
+        const CheckCircleIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>;
+        const LockIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M4 4a4 4 0 0 1 8 0v1h-1V4a3 3 0 0 0-6 0v1H4V4zm2 3V6h4v1h1v6H5V7h1z"/></svg>;
+        const TrophyIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a.5.5 0 0 1 .5.5V3h3a.5.5 0 0 1 0 1h-.5v2.5a3.5 3.5 0 0 1-7 0V4H3.5a.5.5 0 0 1 0-1h3V1.5A.5.5 0 0 1 8 1z"/></svg>;
+        const FlameIcon = () => <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6C10.438 3.489 8.5 2.5 8 0c-.5 2.5-2.438 3.489-3.5 4.5C2.5 6.5 2 9 2 10.5 2 14 4.686 16 8 16z"/></svg>;
+        const TrendingUpIcon = () => <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 16 16"><path d="M15.854 4.854a.5.5 0 0 0-.708-.708L11 8.293 8.854 6.146a.5.5 0 0 0-.708 0L4.5 9.793l-.646-.647a.5.5 0 0 0-.708.708l1 1a.5.5 0 0 0 .708 0L8.5 7.207l2.146 2.147a.5.5 0 0 0 .708 0l4.5-4.5z"/></svg>;
 
         const EconoPython = () => {
             // Level definitions
@@ -265,7 +245,17 @@
                     trackError('wrong_variable');
                 }
                 
-                if (code.includes('Hello, World') && !code.includes("'Hello, World!'") && !code.includes('"Hello, World!"')) {
+                // Check for variable vs string confusion in level 2
+                if (currentLevel === 2 && (code.includes('print(\'gdp_growth\')') || code.includes('print("gdp_growth")'))) {
+                    misconceptions.push({
+                        type: 'variable_vs_string',
+                        message: "You're printing the word 'gdp_growth' instead of the variable's value.",
+                        suggestion: "Remove quotes to print the variable: print(gdp_growth) not print('gdp_growth'). Variables don't need quotes, strings do."
+                    });
+                    trackError('variable_vs_string');
+                }
+                
+                if (code.includes('Hello, World!') && !code.includes("'Hello, World!'") && !code.includes('"Hello, World!"')) {
                     misconceptions.push({
                         type: 'missing_quotes',
                         message: "Text (strings) must be wrapped in quotes in Python.",
@@ -351,6 +341,16 @@
                         return `Syntax Error: ${syntaxErrors[0]}`;
                     }
 
+                    // Special handling for level 3 comma-separated print statements
+                    if (currentLevel === 3 && code.includes('country = \'United Kingdom\'')) {
+                        if (code.includes('print(\'Analysis for:\', country)') || 
+                            code.includes('print(\'Analysis for: \', country)') || 
+                            code.includes('print("Analysis for:", country)') || 
+                            code.includes('print("Analysis for: ", country)')) {
+                            return 'Analysis for: United Kingdom';
+                        }
+                    }
+
                     const printRegex = /print\((.*?)\)/g;
                     const matches = [];
                     let match;
@@ -368,11 +368,6 @@
                             if (code.includes('country = \'United Kingdom\'') || code.includes('country = "United Kingdom"')) {
                                 matches.push(value.replace(/f['"]Analysis for: \{country\}['"]/, 'Analysis for: United Kingdom'));
                             }
-                        } else if (value.includes('Analysis for:') && value.includes('country')) {
-                            // Handle both comma-separated and f-string formats
-                            if (code.includes('country = \'United Kingdom\'') || code.includes('country = "United Kingdom"')) {
-                                matches.push('Analysis for: United Kingdom');
-                            }
                         } else if (value.includes('*') || value.includes('/')) {
                             try {
                                 const result = eval(value);
@@ -382,12 +377,17 @@
                             }
                         } else {
                             // Handle variable references and other cases
-                            if (value === 'gdp_growth' && code.includes('gdp_growth = 2.5')) matches.push('2.5');
-                            else if (value === 'real_gdp' && code.includes('nominal_gdp = 1000') && code.includes('price_level = 1.05')) matches.push('952.3809523809524');
-                            else if (value === 'nominal_gdp/price_level' && code.includes('nominal_gdp = 1000') && code.includes('price_level = 1.05')) matches.push('952.3809523809524');
-                            else if ((value === 'indicators[\'gdp\']' || value === 'indicators["gdp"]') && code.includes('indicators')) matches.push('2800');
-                            else if (value.includes('unemployment_rate') && code.includes('High unemployment detected')) matches.push('High unemployment detected');
-                            else {
+                            if (value === 'gdp_growth' && code.includes('gdp_growth = 2.5')) {
+                                matches.push('2.5');
+                            } else if (value === 'real_gdp' && code.includes('nominal_gdp = 1000') && code.includes('price_level = 1.05')) {
+                                matches.push('952.3809523809524');
+                            } else if (value === 'nominal_gdp/price_level' && code.includes('nominal_gdp = 1000') && code.includes('price_level = 1.05')) {
+                                matches.push('952.3809523809524');
+                            } else if ((value === 'indicators[\'gdp\']' || value === 'indicators["gdp"]') && code.includes('indicators')) {
+                                matches.push('2800');
+                            } else if (value.includes('unemployment_rate') && code.includes('High unemployment detected')) {
+                                matches.push('High unemployment detected');
+                            } else {
                                 // For any other cases, try to evaluate safely
                                 try {
                                     const result = eval(value);
@@ -441,7 +441,10 @@
                     let successMessage = 'Correct!';
                     let suggestion = null;
                     
-                    if (currentLevel === 3 && (userCode.includes('print(\'Analysis for:\', country)') || userCode.includes('print(\'Analysis for: \', country)') || userCode.includes('print("Analysis for:", country)') || userCode.includes('print("Analysis for: ", country)'))) {
+                    if (currentLevel === 3 && (userCode.includes('print(\'Analysis for:\', country)') || 
+                                              userCode.includes('print(\'Analysis for: \', country)') || 
+                                              userCode.includes('print("Analysis for:", country)') || 
+                                              userCode.includes('print("Analysis for: ", country)'))) {
                         suggestion = "Good job! For a more elegant solution, try using f-strings: print(f'Analysis for: {country}')";
                     }
                     
@@ -856,7 +859,7 @@
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(React.createElement(EconoPython));
+        root.render(<EconoPython />);
     </script>
 </body>
 </html>
