@@ -245,7 +245,7 @@
                     trackError('wrong_variable');
                 }
                 
-                if (code.includes('Hello, World') && !code.includes("'Hello, World'") && !code.includes('"Hello, World"')) {
+                if (code.includes('Hello, World') && !code.includes("'Hello, World!'") && !code.includes('"Hello, World!"')) {
                     misconceptions.push({
                         type: 'missing_quotes',
                         message: "Text (strings) must be wrapped in quotes in Python.",
@@ -655,7 +655,7 @@
                                     <p className="text-gray-600 mb-4">{currentLevelData.description}</p>
                                     
                                     <div className="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-lg">
-                                        <h3 className="font-semibold text-indigo-800 mb-2">📊 Econometric Task:</h3>
+                                        <h3 className="font-semibold text-indigo-800 mb-2">Task:</h3>
                                         <p className="text-indigo-700">{currentLevelData.task}</p>
                                     </div>
                                 </div>
