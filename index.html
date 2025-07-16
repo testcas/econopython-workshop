@@ -1,4 +1,32 @@
-<!DOCTYPE html>
+                                        {feedback.attempts && (
+                                            <div className="mb-2">
+                                                <p className="text-sm text-gray-600">
+                                                    Attempt #{feedback.attempts} {feedback.type === 'success' ? '✅' : '❌'}
+                                                </p>
+                                            </div>
+                                        )}                            <div className="p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-2xl font-bold text-gray-800">
+                                        Select {challengeMode ? 'Challenge' : 'Python'} Level
+                                    </h2>
+                                    <button
+                                        onClick={() => setShowLevelSelector(false)}
+                                        className="text-gray-500 hover:text-gray-700 text-xl"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {allLevels.map((level) => {
+                                        const isCompleted = completedLevels.has(level.id);
+                                        const isLocked = level.id > Math.max(1, Math.max(...Array.from(completedLevels)) + 1);
+                                        const isCurrentLevel = level.id === currentLevel;
+                                        const isChallenge = level.id > 8;
+                                        
+                                        return (
+                                            <button
+                                                <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -125,21 +153,167 @@
             const [feedback, setFeedback] = useState(null);
             const [streak, setStreak] = useState(0);
             const [showLevelSelector, setShowLevelSelector] = useState(false);
+            const [challengeMode, setChallengeMode] = useState(false);
+            const [attemptCount, setAttemptCount] = useState(0);
+            const [totalAttempts, setTotalAttempts] = useState(0);
+            const [commonErrors, setCommonErrors] = useState({});
+            const [showMetrics, setShowMetrics] = useState(false);
+
+            // Challenge mode levels
+            const challengeLevels = [
+                {
+                    id: 9,
+                    title: "Data Analysis Challenge",
+                    description: "Analyze economic data using multiple Python concepts together.",
+                    task: "Calculate the average GDP growth rate from the list [2.1, 3.4, 1.8, 2.9, 3.2] and determine if it's above 2.5%.",
+                    starterCode: "# Challenge: Combine lists, calculations, and conditionals\ngdp_growth_rates = [2.1, 3.4, 1.8, 2.9, 3.2]\n",
+                    expectedOutput: "2.68\nAbove target",
+                    hint: "Calculate the sum of all values, divide by the count, then use an if statement to check if it's above 2.5.",
+                    solution: "gdp_growth_rates = [2.1, 3.4, 1.8, 2.9, 3.2]\naverage = sum(gdp_growth_rates) / len(gdp_growth_rates)\nprint(average)\nif average > 2.5:\n    print('Above target')\nelse:\n    print('Below target')"
+                },
+                {
+                    id: 10,
+                    title: "Policy Analysis Challenge",
+                    description: "Create a comprehensive policy analysis tool.",
+                    task: "Create a policy_analysis dictionary with country='Netherlands', unemployment=3.8, inflation=2.1. Check if both are within targets (unemployment < 5%, inflation < 3%) and print appropriate messages.",
+                    starterCode: "# Challenge: Complex data structures and multiple conditions\n",
+                    expectedOutput: "Unemployment: Within target\nInflation: Within target\nOverall: Policy targets met",
+                    hint: "Create the dictionary, then use separate if statements for each indicator, and a final check for both conditions.",
+                    solution: "policy_analysis = {'country': 'Netherlands', 'unemployment': 3.8, 'inflation': 2.1}\nif policy_analysis['unemployment'] < 5.0:\n    print('Unemployment: Within target')\nelse:\n    print('Unemployment: Above target')\nif policy_analysis['inflation'] < 3.0:\n    print('Inflation: Within target')\nelse:\n    print('Inflation: Above target')\nif policy_analysis['unemployment'] < 5.0 and policy_analysis['inflation'] < 3.0:\n    print('Overall: Policy targets met')\nelse:\n    print('Overall: Policy targets not met')"
+                },
+                {
+                    id: 11,
+                    title: "Economic Comparison Challenge",
+                    description: "Compare economic performance across multiple countries.",
+                    task: "Create a list of countries ['Germany', 'France', 'Italy'] and GDP values [4200, 2900, 2100]. Find and print the country with the highest GDP.",
+                    starterCode: "# Challenge: Working with parallel lists and finding maximum values\n",
+                    expectedOutput: "Germany",
+                    hint: "Use the max() function to find the highest GDP, then use the index() method to find its position in the list.",
+                    solution: "countries = ['Germany', 'France', 'Italy']\ngdp_values = [4200, 2900, 2100]\nmax_gdp = max(gdp_values)\nmax_index = gdp_values.index(max_gdp)\nprint(countries[max_index])"
+                }
+            ];
+
+            // Combined levels for display
+            const allLevels = challengeMode ? [...levels, ...challengeLevels] : levels;
+            const currentLevelData = allLevels.find(l => l.id === currentLevel);
+            const totalLevels = allLevels.length;
 
             // Update user code when level changes
             useEffect(() => {
-                const level = levels.find(l => l.id === currentLevel);
-                setUserCode(level.starterCode);
-                setShowHint(false);
-                setFeedback(null);
-            }, [currentLevel]);
+                const level = allLevels.find(l => l.id === currentLevel);
+                if (level) {
+                    setUserCode(level.starterCode);
+                    setShowHint(false);
+                    setFeedback(null);
+                    setAttemptCount(0);
+                }
+            }, [currentLevel, challengeMode]);
+
+            // Track metrics
+            const trackError = (errorType) => {
+                setCommonErrors(prev => ({
+                    ...prev,
+                    [errorType]: (prev[errorType] || 0) + 1
+                }));
+            };
+
+            const trackSuccess = (levelId, attempts) => {
+                const metrics = {
+                    level: levelId,
+                    attempts: attempts,
+                    timestamp: new Date().toISOString(),
+                    challengeMode: challengeMode
+                };
+                console.log('SUCCESS METRICS:', metrics);
+                // You can send this to your analytics service
+            };
+
+            // Enhanced misconception detection
+            const detectMisconceptions = (code) => {
+                const misconceptions = [];
+                
+                // Check for print without parentheses
+                if (code.includes('print ') && !code.includes('print(')) {
+                    misconceptions.push({
+                        type: 'print_syntax',
+                        message: "Remember: In Python, functions need parentheses. Use print() not print.",
+                        suggestion: "Change 'print variable' to 'print(variable)'"
+                    });
+                    trackError('print_syntax');
+                }
+                
+                // Check for assignment instead of equality
+                if (code.includes('if ') && code.includes('=') && !code.includes('==') && !code.includes('!=') && !code.includes('>=') && !code.includes('<=')) {
+                    misconceptions.push({
+                        type: 'assignment_in_condition',
+                        message: "In conditions, use == to compare, not = (which assigns values).",
+                        suggestion: "Change 'if variable = value' to 'if variable == value'"
+                    });
+                    trackError('assignment_in_condition');
+                }
+                
+                // Check for missing indentation
+                if ((code.includes('if ') || code.includes('while ') || code.includes('for ')) && code.includes('\n')) {
+                    const lines = code.split('\n');
+                    for (let i = 0; i < lines.length - 1; i++) {
+                        if (lines[i].includes(':') && lines[i + 1] && !lines[i + 1].startsWith('    ') && !lines[i + 1].startsWith('\t') && lines[i + 1].trim()) {
+                            misconceptions.push({
+                                type: 'indentation',
+                                message: "Python requires indentation after colons (:). The next line should be indented.",
+                                suggestion: "Add 4 spaces or press Tab before the line after ':'"
+                            });
+                            trackError('indentation');
+                            break;
+                        }
+                    }
+                }
+                
+                // Check for wrong variable names
+                if (currentLevel === 2 && code.includes('gdp') && !code.includes('gdp_growth')) {
+                    misconceptions.push({
+                        type: 'wrong_variable',
+                        message: "Make sure to use the exact variable name requested: 'gdp_growth'",
+                        suggestion: "Change your variable name to 'gdp_growth'"
+                    });
+                    trackError('wrong_variable');
+                }
+                
+                // Check for missing quotes in strings
+                if (code.includes('Hello, World') && !code.includes("'Hello, World'") && !code.includes('"Hello, World"')) {
+                    misconceptions.push({
+                        type: 'missing_quotes',
+                        message: "Text (strings) must be wrapped in quotes in Python.",
+                        suggestion: "Put quotes around text: 'Hello, World!' or \"Hello, World!\""
+                    });
+                    trackError('missing_quotes');
+                }
+                
+                // Check for dictionary access errors
+                if (code.includes('[') && code.includes(']') && code.includes('gdp') && !code.includes("'gdp'") && !code.includes('"gdp"')) {
+                    misconceptions.push({
+                        type: 'dict_key_quotes',
+                        message: "Dictionary keys must be in quotes when accessing them.",
+                        suggestion: "Use indicators['gdp'] with quotes around the key"
+                    });
+                    trackError('dict_key_quotes');
+                }
+                
+                return misconceptions;
+            };
 
             // Enhanced code execution simulation with error detection
             const executeCode = (code) => {
                 try {
-                    // Check for common syntax errors first
+                    // Check for misconceptions first
+                    const misconceptions = detectMisconceptions(code);
+                    if (misconceptions.length > 0) {
+                        return `Misconception: ${misconceptions[0].message}\n${misconceptions[0].suggestion}`;
+                    }
+
+                    // Check for common syntax errors
                     const syntaxErrors = checkSyntaxErrors(code);
                     if (syntaxErrors.length > 0) {
+                        trackError('syntax_error');
                         return `Syntax Error: ${syntaxErrors[0]}`;
                     }
 
@@ -168,14 +342,26 @@
                                 matches.push(value);
                             }
                         } else {
+                            // Handle regular and challenge level outputs
                             if (code.includes('gdp_growth = 2.5')) matches.push('2.5');
                             if (code.includes('real_gdp = nominal_gdp / price_level')) matches.push('952.3809523809524');
                             if (code.includes('indicators[\'gdp\']')) matches.push('2800');
                             if (code.includes('Hello, World!')) matches.push('Hello, World!');
                             if (code.includes('High unemployment detected')) matches.push('High unemployment detected');
+                            
+                            // Challenge mode outputs
+                            if (code.includes('average') && code.includes('sum(gdp_growth_rates)')) {
+                                matches.push('2.68');
+                                if (code.includes('Above target')) matches.push('Above target');
+                            }
+                            if (code.includes('Unemployment: Within target')) matches.push('Unemployment: Within target');
+                            if (code.includes('Inflation: Within target')) matches.push('Inflation: Within target');
+                            if (code.includes('Overall: Policy targets met')) matches.push('Overall: Policy targets met');
+                            if (code.includes('Germany') && code.includes('max_gdp')) matches.push('Germany');
                         }
                     }
 
+                    // Handle loops
                     if (code.includes('while value >= 5')) {
                         matches.push('10', '9.0', '8.1', '7.29', '6.561', '5.9049', '5.31441');
                     }
@@ -185,6 +371,7 @@
 
                     return matches.join('\n');
                 } catch (error) {
+                    trackError('execution_error');
                     return "Error: " + error.message;
                 }
             };
@@ -247,17 +434,22 @@
             };
 
             const handleSubmit = () => {
-                const level = levels.find(l => l.id === currentLevel);
+                const level = allLevels.find(l => l.id === currentLevel);
+                setAttemptCount(prev => prev + 1);
+                setTotalAttempts(prev => prev + 1);
+                
                 const output = executeCode(userCode);
                 const isCorrect = output.trim() === level.expectedOutput.trim();
 
                 if (isCorrect) {
                     setCompletedLevels(prev => new Set([...prev, currentLevel]));
                     setStreak(prev => prev + 1);
+                    trackSuccess(currentLevel, attemptCount + 1);
                     setFeedback({
                         type: 'success',
-                        message: '🎉 Excellent! You\'ve mastered this concept!',
-                        output: output
+                        message: `🎉 Excellent! You've mastered this ${challengeMode && currentLevel > 8 ? 'challenge' : 'concept'}!`,
+                        output: output,
+                        attempts: attemptCount + 1
                     });
                 } else {
                     setStreak(0);
@@ -266,16 +458,18 @@
                         message: 'Let\'s refine your code:',
                         output: output,
                         expected: level.expectedOutput,
-                        explanation: level.hint
+                        explanation: level.hint,
+                        attempts: attemptCount + 1
                     });
                 }
             };
 
             const handleReset = () => {
-                const level = levels.find(l => l.id === currentLevel);
+                const level = allLevels.find(l => l.id === currentLevel);
                 setUserCode(level.starterCode);
                 setFeedback(null);
                 setShowHint(false);
+                setAttemptCount(0);
             };
 
             const handleLevelChange = (levelId) => {
@@ -286,8 +480,13 @@
                 }
             };
 
-            const currentLevelData = levels.find(l => l.id === currentLevel);
-            const progressPercentage = (completedLevels.size / levels.length) * 100;
+            const toggleChallengeMode = () => {
+                setChallengeMode(!challengeMode);
+                setCurrentLevel(1);
+                setShowLevelSelector(false);
+            };
+
+            const progressPercentage = (completedLevels.size / totalLevels) * 100;
 
             return (
                 <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -341,6 +540,62 @@
                             </div>
                         </div>
                     </header>
+
+                    {/* Metrics Modal */}
+                    {showMetrics && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                                <div className="p-6">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h2 className="text-2xl font-bold text-gray-800">Success Metrics</h2>
+                                        <button
+                                            onClick={() => setShowMetrics(false)}
+                                            className="text-gray-500 hover:text-gray-700 text-xl"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="bg-blue-50 p-4 rounded-lg">
+                                            <h3 className="font-semibold text-blue-800 mb-2">Progress Stats</h3>
+                                            <div className="space-y-2 text-sm">
+                                                <div>Completed Levels: {completedLevels.size}/{totalLevels}</div>
+                                                <div>Current Streak: {streak}</div>
+                                                <div>Total Attempts: {totalAttempts}</div>
+                                                <div>Mode: {challengeMode ? 'Challenge' : 'Normal'}</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="bg-red-50 p-4 rounded-lg">
+                                            <h3 className="font-semibold text-red-800 mb-2">Common Errors</h3>
+                                            <div className="space-y-2 text-sm">
+                                                {Object.entries(commonErrors).length > 0 ? (
+                                                    Object.entries(commonErrors).map(([error, count]) => (
+                                                        <div key={error}>
+                                                            {error.replace('_', ' ')}: {count}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="text-gray-600">No errors yet - great job!</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                                        <h3 className="font-semibold text-gray-800 mb-2">For Instructors</h3>
+                                        <p className="text-sm text-gray-600 mb-2">
+                                            Success metrics are logged to browser console. Check browser developer tools (F12) for detailed analytics.
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            Look for "SUCCESS METRICS:" entries to track student progress and identify areas where students struggle.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Level Selector Modal */}
                     {showLevelSelector && (
@@ -523,17 +778,17 @@
                             
                             <div className="text-center">
                                 <p className="text-gray-600">
-                                    Level {currentLevel} of {levels.length}
+                                    Level {currentLevel} of {totalLevels} {challengeMode && currentLevel > 8 ? '🏆' : ''}
                                 </p>
                             </div>
                             
                             <button
                                 onClick={() => {
-                                    if (completedLevels.has(currentLevel) && currentLevel < levels.length) {
+                                    if (completedLevels.has(currentLevel) && currentLevel < totalLevels) {
                                         handleLevelChange(currentLevel + 1);
                                     }
                                 }}
-                                disabled={!completedLevels.has(currentLevel) || currentLevel === levels.length}
+                                disabled={!completedLevels.has(currentLevel) || currentLevel === totalLevels}
                                 className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 Next Level
