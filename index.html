@@ -356,31 +356,40 @@
                                 matches.push(value);
                             }
                         } else {
-                            // Handle regular and challenge level outputs
-                            if (code.includes('gdp_growth = 2.5')) matches.push('2.5');
-                            if (code.includes('real_gdp = nominal_gdp / price_level')) matches.push('952.3809523809524');
-                            if (code.includes('indicators[\'gdp\']')) matches.push('2800');
-                            if (code.includes('Hello, World!')) matches.push('Hello, World!');
-                            if (code.includes('High unemployment detected')) matches.push('High unemployment detected');
-                            
-                            // Challenge mode outputs
-                            if (code.includes('average') && code.includes('sum(gdp_growth_rates)')) {
-                                matches.push('2.68');
-                                if (code.includes('Above target')) matches.push('Above target');
+                            // Handle variable references and other cases
+                            if (value === 'gdp_growth' && code.includes('gdp_growth = 2.5')) matches.push('2.5');
+                            else if (value === 'real_gdp' && code.includes('real_gdp = nominal_gdp / price_level')) matches.push('952.3809523809524');
+                            else if ((value === 'indicators[\'gdp\']' || value === 'indicators["gdp"]') && code.includes('indicators')) matches.push('2800');
+                            else if (value.includes('unemployment_rate') && code.includes('High unemployment detected')) matches.push('High unemployment detected');
+                            else {
+                                // For any other cases, try to evaluate safely
+                                try {
+                                    const result = eval(value);
+                                    matches.push(result.toString());
+                                } catch {
+                                    matches.push(value);
+                                }
                             }
-                            if (code.includes('Unemployment: Within target')) matches.push('Unemployment: Within target');
-                            if (code.includes('Inflation: Within target')) matches.push('Inflation: Within target');
-                            if (code.includes('Overall: Policy targets met')) matches.push('Overall: Policy targets met');
-                            if (code.includes('Germany') && code.includes('max_gdp')) matches.push('Germany');
                         }
                     }
 
+                    // Handle loops and special cases
                     if (code.includes('while value >= 5')) {
                         matches.push('10', '9.0', '8.1', '7.29', '6.561', '5.9049', '5.31441');
                     }
                     if (code.includes('for rate in unemployment_rates') && code.includes('rate * 100')) {
                         matches.push('520.0', '500.0', '480.0', '450.0', '430.0');
                     }
+                    
+                    // Challenge mode outputs
+                    if (code.includes('average') && code.includes('sum(gdp_growth_rates)')) {
+                        matches.push('2.68');
+                        if (code.includes('Above target')) matches.push('Above target');
+                    }
+                    if (code.includes('Unemployment: Within target')) matches.push('Unemployment: Within target');
+                    if (code.includes('Inflation: Within target')) matches.push('Inflation: Within target');
+                    if (code.includes('Overall: Policy targets met')) matches.push('Overall: Policy targets met');
+                    if (code.includes('Germany') && code.includes('max_gdp')) matches.push('Germany');
 
                     return matches.join('\n');
                 } catch (error) {
