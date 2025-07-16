@@ -1,4 +1,24 @@
-<!DOCTYPE html>
+                    // Handle comma-separated print statements for level 3
+                    if (currentLevel === 3 && (code.includes('print(\'Analysis for:\', country)') || code.includes('print(\'Analysis for: \', country)') || code.includes('print("Analysis for:", country)') || code.includes('print("Analysis for: ", country)'))) {
+                        matches.push('Analysis for: United Kingdom');
+                    }                // Check for common misconceptions in variable printing
+                if (currentLevel === 2 && code.includes('print(\'gdp_growth\')')) {
+                    misconceptions.push({
+                        type: 'variable_vs_string',
+                        message: "You're printing the word 'gdp_growth' instead of the variable's value.",
+                        suggestion: "Remove quotes to print the variable: print(gdp_growth) not print('gdp_growth'). Variables don't need quotes, strings do."
+                    });
+                    trackError('variable_vs_string');
+                }
+                
+                if (currentLevel === 2 && code.includes('print("gdp_growth")')) {
+                    misconceptions.push({
+                        type: 'variable_vs_string',
+                        message: "You're printing the word 'gdp_growth' instead of the variable's value.",
+                        suggestion: "Remove quotes to print the variable: print(gdp_growth) not print(\"gdp_growth\"). Variables don't need quotes, strings do."
+                    });
+                    trackError('variable_vs_string');
+                }<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -348,6 +368,11 @@
                             if (code.includes('country = \'United Kingdom\'') || code.includes('country = "United Kingdom"')) {
                                 matches.push(value.replace(/f['"]Analysis for: \{country\}['"]/, 'Analysis for: United Kingdom'));
                             }
+                        } else if (value.includes('Analysis for:') && value.includes('country')) {
+                            // Handle both comma-separated and f-string formats
+                            if (code.includes('country = \'United Kingdom\'') || code.includes('country = "United Kingdom"')) {
+                                matches.push('Analysis for: United Kingdom');
+                            }
                         } else if (value.includes('*') || value.includes('/')) {
                             try {
                                 const result = eval(value);
@@ -358,7 +383,8 @@
                         } else {
                             // Handle variable references and other cases
                             if (value === 'gdp_growth' && code.includes('gdp_growth = 2.5')) matches.push('2.5');
-                            else if (value === 'real_gdp' && code.includes('real_gdp = nominal_gdp / price_level')) matches.push('952.3809523809524');
+                            else if (value === 'real_gdp' && code.includes('nominal_gdp = 1000') && code.includes('price_level = 1.05')) matches.push('952.3809523809524');
+                            else if (value === 'nominal_gdp/price_level' && code.includes('nominal_gdp = 1000') && code.includes('price_level = 1.05')) matches.push('952.3809523809524');
                             else if ((value === 'indicators[\'gdp\']' || value === 'indicators["gdp"]') && code.includes('indicators')) matches.push('2800');
                             else if (value.includes('unemployment_rate') && code.includes('High unemployment detected')) matches.push('High unemployment detected');
                             else {
@@ -410,11 +436,21 @@
                     setCompletedLevels(prev => new Set([...prev, currentLevel]));
                     setStreak(prev => prev + 1);
                     trackSuccess(currentLevel, attemptCount + 1);
+                    
+                    // Check for comma-separated print in level 3 and suggest f-string
+                    let successMessage = 'Correct!';
+                    let suggestion = null;
+                    
+                    if (currentLevel === 3 && (userCode.includes('print(\'Analysis for:\', country)') || userCode.includes('print(\'Analysis for: \', country)') || userCode.includes('print("Analysis for:", country)') || userCode.includes('print("Analysis for: ", country)'))) {
+                        suggestion = "Good job! For a more elegant solution, try using f-strings: print(f'Analysis for: {country}')";
+                    }
+                    
                     setFeedback({
                         type: 'success',
-                        message: `🎉 Excellent! You've mastered this ${challengeMode && currentLevel > 8 ? 'challenge' : 'concept'}!`,
+                        message: successMessage,
                         output: output,
-                        attempts: attemptCount + 1
+                        attempts: attemptCount + 1,
+                        suggestion: suggestion
                     });
                 } else {
                     setStreak(0);
@@ -711,6 +747,12 @@
                                             <div className="mb-2">
                                                 <p className="text-sm text-gray-600 mb-1">Expected output:</p>
                                                 <pre className="bg-gray-100 p-2 rounded text-sm font-mono">{feedback.expected}</pre>
+                                            </div>
+                                        )}
+                                        
+                                        {feedback.suggestion && (
+                                            <div className="mt-3 p-3 bg-blue-50 rounded">
+                                                <p className="text-sm text-blue-800"><strong>Suggestion:</strong> {feedback.suggestion}</p>
                                             </div>
                                         )}
                                         
