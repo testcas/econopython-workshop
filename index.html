@@ -82,8 +82,8 @@
                     task: "Check if unemployment rate (8.5) is above 8%. If yes, print 'High unemployment detected'",
                     starterCode: "# Policy analysis often uses thresholds\nunemployment_rate = 8.5\n",
                     expectedOutput: "High unemployment detected",
-                    hint: "Use an if statement to compare the unemployment rate to 8.0. Remember to indent the print statement.",
-                    solution: "unemployment_rate = 8.5\nif unemployment_rate > 8.0:\n    print('High unemployment detected')"
+                    hint: "Use an if statement to compare the unemployment rate to 8. Remember to indent the print statement.",
+                    solution: "unemployment_rate = 8.5\nif unemployment_rate > 8:\n    print('High unemployment detected')"
                 },
                 {
                     id: 6,
@@ -341,6 +341,14 @@
                         return `Syntax Error: ${syntaxErrors[0]}`;
                     }
 
+                    // Handle loops and special cases FIRST - before print parsing
+                    if (code.includes('while value >= 5') || code.includes('while value>=5')) {
+                        return '10\n9.0\n8.1\n7.29\n6.561\n5.9049\n5.31441';
+                    }
+                    if (code.includes('for rate in unemployment_rates') && code.includes('rate * 100')) {
+                        return '520.0\n500.0\n480.0\n450.0\n430.0';
+                    }
+
                     // Special handling for level 3 comma-separated print statements
                     if (currentLevel === 3 && code.includes('country = \'United Kingdom\'')) {
                         if (code.includes('print(\'Analysis for:\', country)') || 
@@ -397,14 +405,6 @@
                                 }
                             }
                         }
-                    }
-
-                    // Handle loops and special cases
-                    if (code.includes('while value >= 5')) {
-                        matches.push('10', '9.0', '8.1', '7.29', '6.561', '5.9049', '5.31441');
-                    }
-                    if (code.includes('for rate in unemployment_rates') && code.includes('rate * 100')) {
-                        matches.push('520.0', '500.0', '480.0', '450.0', '430.0');
                     }
                     
                     // Challenge mode outputs
