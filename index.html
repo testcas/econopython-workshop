@@ -1,7 +1,4 @@
-                    // Special handling for level 5 unemployment check
-                    if (currentLevel === 5 && code.includes('unemployment_rate = 8.5') && code.includes('unemployment_rate > 8') && code.includes('High unemployment detected')) {
-                        return 'High unemployment detected';
-                    }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -199,22 +196,17 @@
                     setAttemptCount(0);
                 }
                 
-                // Load saved progress
-                const savedProgress = localStorage.getItem('econopython-progress');
+                // Load saved progress - using in-memory storage instead of localStorage
+                const savedProgress = window.econoPythonProgress;
                 if (savedProgress) {
-                    try {
-                        const progress = JSON.parse(savedProgress);
-                        setCompletedLevels(new Set(progress.completedLevels || []));
-                        setStreak(progress.streak || 0);
-                        setTotalAttempts(progress.totalAttempts || 0);
-                        setCommonErrors(progress.commonErrors || {});
-                    } catch (e) {
-                        console.log('Could not load saved progress');
-                    }
+                    setCompletedLevels(new Set(savedProgress.completedLevels || []));
+                    setStreak(savedProgress.streak || 0);
+                    setTotalAttempts(savedProgress.totalAttempts || 0);
+                    setCommonErrors(savedProgress.commonErrors || {});
                 }
             }, [currentLevel, challengeMode]);
 
-            // Save progress function
+            // Save progress function - using in-memory storage
             const saveProgress = () => {
                 const progress = {
                     completedLevels: Array.from(completedLevels),
@@ -223,7 +215,7 @@
                     commonErrors: commonErrors,
                     timestamp: new Date().toISOString()
                 };
-                localStorage.setItem('econopython-progress', JSON.stringify(progress));
+                window.econoPythonProgress = progress;
             };
 
             // Save progress whenever it changes
@@ -459,6 +451,11 @@
                         }
                     }
 
+                    // Special handling for level 5 unemployment check
+                    if (currentLevel === 5 && code.includes('unemployment_rate = 8.5') && code.includes('unemployment_rate > 8') && code.includes('High unemployment detected')) {
+                        return 'High unemployment detected';
+                    }
+
                     const printRegex = /print\((.*?)\)/g;
                     const matches = [];
                     let match;
@@ -504,12 +501,6 @@
                                 } else if (dictMatch && value.includes(`${dictMatch[1]}["gdp"]`)) {
                                     matches.push('2800');
                                 }
-                            } else if (currentLevel === 5 && code.includes('unemployment_rate = 8.5') && code.includes('unemployment_rate>8') && code.includes('High unemployment detected')) {
-                                // Handle level 5 unemployment check with flexible spacing
-                                matches.push('High unemployment detected');
-                            } else if (currentLevel === 5 && code.includes('unemployment_rate = 8.5') && code.includes('unemployment_rate > 8') && code.includes('High unemployment detected')) {
-                                // Handle level 5 unemployment check with spaces
-                                matches.push('High unemployment detected');
                             } else {
                                 // For any other cases, try to evaluate safely
                                 try {
@@ -1012,3 +1003,4 @@
     </script>
 </body>
 </html>
+                
