@@ -539,26 +539,27 @@
                         }
                     }
                     
-                    // Challenge mode outputs - handle level 9 GDP challenge
+                    // Challenge mode outputs - handle level 9 GDP challenge (more flexible)
                     if (currentLevel === 9 && code.includes('gdp_growth_rates = [2.1, 3.4, 1.8, 2.9, 3.2]')) {
                         // Only accept solutions that use > 2.5 (not >= 2.5)
                         if (code.includes('> 2.5')) {
-                            // Check for various ways to calculate average
+                            let hasValidCalculation = false;
+                            
+                            // Check for standard Python approach
                             if (code.includes('sum(gdp_growth_rates)') && code.includes('len(gdp_growth_rates)')) {
-                                // Standard Python approach
-                                if (code.includes('Above target') || code.includes('above target')) {
-                                    return '2.68\nAbove target';
-                                }
-                            } else if (code.includes('np.mean') && code.includes('import numpy')) {
-                                // NumPy approach
-                                if (code.includes('Above target') || code.includes('above target')) {
-                                    return '2.68\nAbove target';
-                                }
-                            } else if (code.includes('average') && (code.includes('sum(') || code.includes('np.mean'))) {
-                                // Any approach with average calculation
-                                if (code.includes('Above target') || code.includes('above target')) {
-                                    return '2.68\nAbove target';
-                                }
+                                hasValidCalculation = true;
+                            }
+                            // Check for NumPy approach
+                            else if (code.includes('np.mean') || code.includes('numpy.mean')) {
+                                hasValidCalculation = true;
+                            }
+                            // Check for manual average calculation
+                            else if (code.includes('/ 5') || code.includes('/5')) {
+                                hasValidCalculation = true;
+                            }
+                            
+                            if (hasValidCalculation && (code.includes('Above target') || code.includes('above target'))) {
+                                return '2.68\nAbove target';
                             }
                         }
                     }
@@ -581,7 +582,8 @@
                 setTotalAttempts(prev => prev + 1);
                 
                 const output = executeCode(userCode);
-                const isCorrect = output.trim() === level.expectedOutput.trim();
+                const isCorrect = output.trim() === level.expectedOutput.trim() || 
+                                 (currentLevel === 9 && output.includes('2.68') && output.includes('Above target'));
 
                 if (isCorrect) {
                     setCompletedLevels(prev => new Set([...prev, currentLevel]));
@@ -597,6 +599,16 @@
                                               userCode.includes('print("Analysis for:", country)') || 
                                               userCode.includes('print("Analysis for: ", country)'))) {
                         suggestion = "Good job! For a more elegant solution, try using f-strings: print(f'Analysis for: {country}')";
+                    }
+                    
+                    // Level 9 feedback - suggest standard Python approach if using NumPy
+                    if (currentLevel === 9 && (userCode.includes('np.mean') || userCode.includes('numpy.mean'))) {
+                        suggestion = "Great work! For a pure Python approach without imports, try: average = sum(gdp_growth_rates) / len(gdp_growth_rates)";
+                    }
+                    
+                    // Level 9 feedback - show complete solution as best practice
+                    if (currentLevel === 9 && !userCode.includes('else:')) {
+                        suggestion = "Excellent! For a complete solution, consider adding an else clause: 'else: print(\"Below target\")'";
                     }
                     
                     setFeedback({
