@@ -442,23 +442,18 @@
                         return '10\n9.0\n8.1\n7.29\n6.561\n5.9049\n5.31441';
                     }
                     
-                    // More flexible list processing for level 8
-                    if (currentLevel === 8 && code.includes('* 100')) {
-                        // Check for various list and loop patterns
-                        const listPatterns = [
-                            /(\w+)\s*=\s*\[5\.2,\s*5\.0,\s*4\.8,\s*4\.5,\s*4\.3\]/,
-                            /(\w+)\s*=\s*\[\s*5\.2\s*,\s*5\.0\s*,\s*4\.8\s*,\s*4\.5\s*,\s*4\.3\s*\]/
-                        ];
+                    // Level 8 - simplified and more robust checking
+                    if (currentLevel === 8) {
+                        // Check if code has the basic structure we expect
+                        const hasDataValues = code.includes('5.2') && code.includes('5.0') && 
+                                            code.includes('4.8') && code.includes('4.5') && code.includes('4.3');
+                        const hasForLoop = code.includes('for ') && code.includes(' in ');
+                        const hasMultiply100 = code.includes('*100') || code.includes('* 100');
+                        const hasPrint = code.includes('print(');
                         
-                        for (let pattern of listPatterns) {
-                            const listMatch = code.match(pattern);
-                            if (listMatch) {
-                                const listName = listMatch[1];
-                                // Check for different loop patterns
-                                if (code.includes(`for `) && code.includes(`in ${listName}`) && code.includes('* 100')) {
-                                    return '520.0\n500.0\n480.0\n450.0\n430.0';
-                                }
-                            }
+                        // If it has all the basic elements, accept it
+                        if (hasDataValues && hasForLoop && hasMultiply100 && hasPrint) {
+                            return '520.0\n500.0\n480.0\n450.0\n430.0';
                         }
                     }
 
